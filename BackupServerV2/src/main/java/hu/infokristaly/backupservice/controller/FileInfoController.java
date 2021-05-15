@@ -119,8 +119,7 @@ public class FileInfoController {
 		try {
 			fileInfo = mapper.readValue(fileInfoJson, FileInfo.class);
 
-			FileInfo existFileInfo = fileInfoService.findByParentFolderIdAndName(fileInfo.getFolderInfo().getId(), fileInfo.getFileName());
-			if (existFileInfo == null) {
+			if (fileInfo.getFolderInfo() != null) {
 				Optional<FolderInfo> folder = folderInfoService.findById(fileInfo.getFolderInfo().getId());
 				if (!folder.isPresent()) {
 					HashMap<String, String> err = new HashMap<String, String>();
@@ -128,14 +127,8 @@ public class FileInfoController {
 					return ResponseEntity.accepted().body(err);
 				}
 				fileInfo.setFolderInfo(folder.get());
-				fileInfoService.save(fileInfo);
-			} else {
-				if (!existFileInfo.getHash().equals(fileInfo.getHash())) {
-					existFileInfo.setHash(fileInfo.getHash());
-					fileInfoService.save(existFileInfo);
-				}
-				fileInfo = existFileInfo;
 			}
+			fileInfoService.save(fileInfo);
 
 			String rootPath = userBackupPath + File.separator + FileInfoService.getFilePath(fileInfo);
 			File filePath = new File(rootPath);
