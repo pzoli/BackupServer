@@ -10,16 +10,17 @@ import javax.persistence.ManyToOne;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @Entity
-@JsonTypeInfo(include=JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
+@JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
 public class FileInfo {
-	@Id 
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private String fileName;
 	@ManyToOne
 	private FolderInfo folderInfo;
+	private String hash;
 	private Long size;
-	
+
 	public FileInfo() {
 	}
 
@@ -36,15 +37,19 @@ public class FileInfo {
 	public Long getId() {
 		return id;
 	}
+
 	public void setId(Long id) {
 		this.id = id;
 	}
+
 	public String getFileName() {
 		return fileName;
 	}
+
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
 	}
+
 	public FolderInfo getFolderInfo() {
 		return folderInfo;
 	}
@@ -52,23 +57,35 @@ public class FileInfo {
 	public void setFolderInfo(FolderInfo folderInfo) {
 		this.folderInfo = folderInfo;
 	}
+
+	public String getHash() {
+		return hash;
+	}
+
+	public void setHash(String hash) {
+		this.hash = hash;
+	}
+
 	public Long getSize() {
 		return size;
 	}
+
 	public void setSize(Long size) {
 		this.size = size;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((fileName == null) ? 0 : fileName.hashCode());
 		result = prime * result + ((folderInfo == null) ? 0 : folderInfo.hashCode());
+		result = prime * result + ((hash == null) ? 0 : hash.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((size == null) ? 0 : size.hashCode());
 		return result;
 	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -87,6 +104,11 @@ public class FileInfo {
 			if (other.folderInfo != null)
 				return false;
 		} else if (!folderInfo.equals(other.folderInfo))
+			return false;
+		if (hash == null) {
+			if (other.hash != null)
+				return false;
+		} else if (!hash.equals(other.hash))
 			return false;
 		if (id == null) {
 			if (other.id != null)

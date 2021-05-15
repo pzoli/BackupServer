@@ -42,26 +42,26 @@ public class FileInfoController {
 
 	@Value("${userBackup.path}")
 	private String userBackupPath;
-	
+
 	@Autowired
 	private FileInfoService fileInfoService;
 
 	@Autowired
 	private FolderInfoService folderInfoService;
 
-	@GetMapping("/{id}") 
-	public FileInfo findById(@PathVariable Long id){
+	@GetMapping("/{id}")
+	public FileInfo findById(@PathVariable Long id) {
 		Optional<FileInfo> result = fileInfoService.findById(id);
 		return result.isPresent() ? result.get() : null;
 	}
-	
+
 	@GetMapping("/findAllFile")
 	public List<FileInfo> findAllFile() {
 		List<FileInfo> result = new LinkedList<FileInfo>();
 		fileInfoService.findAll().forEach(item -> result.add(item));
 		return result;
 	}
-	
+
 	@PostMapping("/save")
 	public FileInfo save(@RequestBody FileInfo fileInfo) {
 		if (fileInfo.getFileName() != null) {
@@ -69,7 +69,7 @@ public class FileInfoController {
 		}
 		return fileInfo;
 	}
-	
+
 	@DeleteMapping("/{id}")
 	public void delete(@PathVariable Long id) {
 		fileInfoService.deleteById(id);
@@ -91,8 +91,7 @@ public class FileInfoController {
 		}
 		FileSystemResource fileSystemResource = new FileSystemResource(file);
 
-		return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
-				.body(fileSystemResource);
+		return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(fileSystemResource);
 	}
 
 	@GetMapping("/findByParentFolderId/{id}")
@@ -100,10 +99,16 @@ public class FileInfoController {
 		List<FileInfo> result = fileInfoService.findByParentFolderId(id);
 		return result;
 	}
-	
+
 	@GetMapping("/findFileByName")
 	public List<FileInfo> findFileByName(@RequestParam String name) {
 		return fileInfoService.findByName(name);
+	}
+
+	@PostMapping("/findByParentFolderIdAndName")
+	public FileInfo find(@RequestBody FileInfo fileInfo) {
+		FileInfo existFileInfo = fileInfoService.findByParentFolderIdAndName(fileInfo.getFolderInfo().getId(), fileInfo.getFileName());
+		return existFileInfo;
 	}
 
 	@RequestMapping(value = "/fileupload", method = { RequestMethod.POST, RequestMethod.PUT }, consumes = { "multipart/form-data;charset=UTF-8" })
@@ -113,19 +118,25 @@ public class FileInfoController {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			fileInfo = mapper.readValue(fileInfoJson, FileInfo.class);
+
 			FileInfo existFileInfo = fileInfoService.findByParentFolderIdAndName(fileInfo.getFolderInfo().getId(), fileInfo.getFileName());
 			if (existFileInfo == null) {
 				Optional<FolderInfo> folder = folderInfoService.findById(fileInfo.getFolderInfo().getId());
 				if (!folder.isPresent()) {
 					HashMap<String, String> err = new HashMap<String, String>();
 					err.put("error", "Parent FolderInfo not found");
-					return ResponseEntity.accepted().body(err);					
+					return ResponseEntity.accepted().body(err);
 				}
 				fileInfo.setFolderInfo(folder.get());
 				fileInfoService.save(fileInfo);
 			} else {
+				if (!existFileInfo.getHash().equals(fileInfo.getHash())) {
+					existFileInfo.setHash(fileInfo.getHash());
+					fileInfoService.save(existFileInfo);
+				}
 				fileInfo = existFileInfo;
 			}
+
 			String rootPath = userBackupPath + File.separator + FileInfoService.getFilePath(fileInfo);
 			File filePath = new File(rootPath);
 			filePath.mkdirs();
